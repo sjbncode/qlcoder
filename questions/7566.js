@@ -1,13 +1,14 @@
 var _ = require('underscore');
 
 function dynamicBags(items, max) {
-	var bags = [];
+	var bag = [];
+	var len=items.length;
 	var orderedItems = _.sortBy(items, 'w');
 	//最多放几个
 	var maxBagSize = 0;
 	var minBagSize = 0;
 	var minW = 0;
-	for (var i = 0; i < items.length; i++) {
+	for (var i = 0; i < len; i++) {
 		var newItems = orderedItems.slice(0, i + 1);
 		var total = _.pluck(newItems, 'w').reduce(function(a, b) {
 			return a + b;
@@ -20,7 +21,7 @@ function dynamicBags(items, max) {
 			break;
 		}
 	}
-	for (var i = 0; i < items.length; i++) {
+	for (var i = 0; i < len; i++) {
 		var newItems = orderedItems.slice(0, -(i + 1));
 		var total = _.pluck(newItems, 'w').reduce(function(a, b) {
 			return a + b;
@@ -37,6 +38,60 @@ function dynamicBags(items, max) {
 		minW: minW,
 		maxW: max
 	});
+	var currentMax=minW;
+	var wlist=_.pluck(orderedItems, 'w');
+	for (var i = minBagSize; i <=maxBagSize; i++) {
+		var tmplist=getFlagArrs(len,i);
+		for (var j = 0; j < tmplist.length; j++) {
+			var tmp=_.zip(wlist,tmplist[j]);
+			var v=_.reduce(tmp,function(a,b){
+				var s=a[0]*a[1]+b[0]*b[1];
+				return [s,1];},[0,0])[0];
+			if(v<=max&&v>currentMax){
+				currentMax=v;
+				bag=tmplist[j];
+			}
+		}
+	}
+	dump(currentMax);
+	dump(bag);
+}
+function getFlagArrs(m, n) {
+    if(!n || n < 1) {
+        return [];
+    }
+ 
+    var resultArrs = [],
+        flagArr = [],
+        isEnd = false,
+        i, j, leftCnt;
+ 
+    for (i = 0; i < m; i++) {
+        flagArr[i] = i < n ? 1 : 0;
+    }
+ 
+    resultArrs.push(flagArr.concat());
+ 
+    while (!isEnd) {
+        leftCnt = 0;
+        for (i = 0; i < m - 1; i++) {
+            if (flagArr[i] == 1 && flagArr[i+1] == 0) {
+                for(j = 0; j < i; j++) {
+                    flagArr[j] = j < leftCnt ? 1 : 0;
+                }
+                flagArr[i] = 0;
+                flagArr[i+1] = 1;
+                var aTmp = flagArr.concat();
+                resultArrs.push(aTmp);
+                if(aTmp.slice(-n).join("").indexOf('0') == -1) {
+                    isEnd = true;
+                }
+                break;
+            }
+            flagArr[i] == 1 && leftCnt++;
+        }
+    }
+    return resultArrs;
 }
 
 function dump(o) {
@@ -60,7 +115,11 @@ var a=[{id:1 ,w:509},
 {id:15,w:644}
 ];
 var b=5000;
-dynamicBags(a,b)
+dynamicBags(a,b);
+// var x=getFlagArrs(150,80);
+// var y=getFlagArrs(150,50);
+// dump(x.length);
+// dump(y.length);
 }
 module.exports={
 	answer:answer,
